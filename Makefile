@@ -3,7 +3,8 @@
 default:all
 
 .DEFAULT:
-	@cd channels && $(MAKE) $@
+	@cd ./channels && $(MAKE) $@
+	@cd ./src && $(MAKE) $@
 
 .PHONY:
 	default

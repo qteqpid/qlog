@@ -5,10 +5,7 @@
 
 OBJ=net.o hiredis.o sds.o qstring.o dso.o
 BINS=qlog-server
-LIBNAME=libhiredis
-
-QLOG_MAJOR=0
-QLOG_MINOR=1
+LIBNAME=libqlog
 
 # Fallback to gcc when $CC is not in $PATH.
 CC:=$(shell sh -c 'type $(CC) >/dev/null 2>/dev/null && echo $(CC) || echo gcc')
@@ -18,19 +15,11 @@ DEBUG?= -g -ggdb
 REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(WARNINGS) $(DEBUG) $(ARCH)
 REAL_LDFLAGS=$(LDFLAGS) $(ARCH) -ldl
 
-DYLIBSUFFIX=so
 STLIBSUFFIX=a
-DYLIB_MINOR_NAME=$(LIBNAME).$(DYLIBSUFFIX).$(QLOG_MAJOR).$(QLOG_MINOR)
-DYLIB_MAJOR_NAME=$(LIBNAME).$(DYLIBSUFFIX).$(QLOG_MAJOR)
-DYLIBNAME=$(LIBNAME).$(DYLIBSUFFIX)
-DYLIB_MAKE_CMD=$(CC) -shared -Wl,-soname,$(DYLIB_MINOR_NAME) -o $(DYLIBNAME) $(LDFLAGS)
 STLIBNAME=$(LIBNAME).$(STLIBSUFFIX)
 STLIB_MAKE_CMD=ar rcs $(STLIBNAME)
 
-all: $(DYLIBNAME) $(BINS)
-$(DYLIBNAME): $(OBJ)
-	$(DYLIB_MAKE_CMD) $(OBJ)
-
+all: $(BINS)
 
 # Deps (use make dep to generate this)
 net.o: net.c fmacros.h net.h hiredis.h
@@ -50,31 +39,12 @@ qlog-%: %.o $(STLIBNAME)
 	$(CC) -std=c99 -pedantic -c $(REAL_CFLAGS) $<
 
 clean:
-	rm -rf $(DYLIBNAME) $(STLIBNAME) $(BINS) *.o 
-
-# Installation related variables and target
-PREFIX?=/usr/local
-INCLUDE_PATH?=include/hiredis
-LIBRARY_PATH?=lib
-INSTALL_INCLUDE_PATH= $(PREFIX)/$(INCLUDE_PATH)
-INSTALL_LIBRARY_PATH= $(PREFIX)/$(LIBRARY_PATH)
-
-ifeq ($(uname_S),SunOS)
-  INSTALL?= cp -r
-endif
-
-INSTALL?= cp -a
+	rm -rf $(STLIBNAME) $(BINS) *.o 
 
 install: $(DYLIBNAME) $(STLIBNAME)
-	mkdir -p $(INSTALL_INCLUDE_PATH) $(INSTALL_LIBRARY_PATH)
-	$(INSTALL) hiredis.h $(INSTALL_INCLUDE_PATH)
-	$(INSTALL) $(DYLIBNAME) $(INSTALL_LIBRARY_PATH)/$(DYLIB_MINOR_NAME)
-	cd $(INSTALL_LIBRARY_PATH) && ln -sf $(DYLIB_MINOR_NAME) $(DYLIB_MAJOR_NAME)
-	cd $(INSTALL_LIBRARY_PATH) && ln -sf $(DYLIB_MAJOR_NAME) $(DYLIBNAME)
-	$(INSTALL) $(STLIBNAME) $(INSTALL_LIBRARY_PATH)
 	mkdir -p /etc/qlog/conf
 	mkdir -p /etc/qlog/channels
-	$(INSTALL) ./qlog.conf /etc/qlog/conf
+	cp -a ../qlog.conf /etc/qlog/conf
 
 32bit:
 	@echo ""

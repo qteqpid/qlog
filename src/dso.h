@@ -11,6 +11,7 @@
 #define STANDARD_CHANNEL_STUFF MAGIC_MAJOR_NUMBER, \
 			       MAGIC_MINOR_NUMBER, \
 			       __FILE__
+
 typedef struct Channel{
 	int version;
 	int minor_version;

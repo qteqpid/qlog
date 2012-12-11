@@ -3,7 +3,7 @@
 
 char * strdup(const char *str);
 
-char * strcat2(char *str1, char * str2, ...);
+char * strcat2(int argc, char *str1, char * str2, ...);
 
 void strreplace(char **old, const char *new);
 

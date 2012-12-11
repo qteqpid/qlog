@@ -37,6 +37,18 @@ clean:
 	rm -rf $(DYLIBNAMES) $(OBJS)
 
 
+# Installation related variables and target
+INSTALL_LIBRARY_PATH=/etc/qlog/channels
+
+ifeq ($(uname_S),SunOS)
+  INSTALL?= cp -r
+endif
+INSTALL?= cp -a
+
+install: $(DYLIBNAMES) 
+	mkdir -p $(INSTALL_LIBRARY_PATH)
+	$(INSTALL) $< $(INSTALL_LIBRARY_PATH)
+
 32bit:
 	@echo ""
 	@echo "WARNING: if this fails under Linux you probably need to install libc6-dev-i386"

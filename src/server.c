@@ -85,7 +85,7 @@ static void version(void)
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ./qlog /path/to/qlog.conf\n");
+	fprintf(stderr, "Usage: ./qlog-server /path/to/qlog.conf\n");
 	exit(1);
 }
 
@@ -152,7 +152,7 @@ static void loadQlogConfig(void)
 			} else if (strcasecmp(argv[0], "logsink") == 0) {
 				qlog.logsink = strdup(argv[1]);
 				createdir(qlog.logsink);
-				qlog.logfile = strcat2(qlog.logsink, "qlog.log");
+				qlog.logfile = strcat2(2, qlog.logsink, "qlog.log");
 			} else if (strcasecmp(argv[0], "channeldir") == 0) {
 				qlog.channeldir = strdup(argv[1]);
 			} else if (strcasecmp(argv[0], "channel") == 0) {
@@ -269,7 +269,7 @@ static void initQlog(void)
 	it = dictGetIterator(qlog.channels);
 	while((de = dictNext(it)) != NULL) {
 		dso_load(&channel, 
-			 strcat2(qlog.channeldir, "chnl_", (char *)dictGetEntryKey(de), ".so"), 
+			 strcat2(4, qlog.channeldir, "chnl_", (char *)dictGetEntryKey(de), ".so"), 
 			 (char *)dictGetEntryKey(de));
 
 		if (channel != NULL) {
@@ -301,7 +301,7 @@ void handleData(const char * ac)
 	FILE *fp = NULL;
 	redisReply * reply;
 	char *cname = strdup(ac);
-	char *file = strcat2(qlog.logsink, cname);
+	char *file = strcat2(2, qlog.logsink, cname);
 
 	//TODO: thread
 	if ((fp = fopen(file, "w"))) {
@@ -398,8 +398,8 @@ int main(int argc, char **argv)
 	
 	loadQlogConfig();
 	createPidfile();
-        if (qlog.daemonize) daemonize();
+    if (qlog.daemonize) daemonize();
 	initQlog();
-        runQlog();
+    runQlog();
 	return 0;
 }

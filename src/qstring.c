@@ -13,15 +13,16 @@ char * strdup(const char *str)
 	return dup;
 }
 
-char * strcat2(char *str1, char * str2, ...) 
+char * strcat2(int argc, char *str1, char * str2, ...) 
 {
 	char *dest = NULL;
 	va_list va_ptr;
 	char *cur = NULL;
 	size_t len = strlen(str1) + strlen(str2);
 
+    argc -= 2;
 	va_start(va_ptr, str2);
-	while((cur = va_arg(va_ptr,char *))) {
+	while(argc-- && (cur = va_arg(va_ptr,char *))) {
 		len += strlen(cur);
 	}
 	va_end(va_ptr);
@@ -30,11 +31,6 @@ char * strcat2(char *str1, char * str2, ...)
 	dest[0] = '\0';
 	strcat(dest, str1);
 	strcat(dest, str2);
-	va_start(va_ptr, str2);
-	while((cur = va_arg(va_ptr,char *))) {
-		strcat(dest, cur);
-	}
-	va_end(va_ptr);
 
 	return dest;
 }
