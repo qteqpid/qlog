@@ -111,16 +111,16 @@ typedef struct dictIterator {
 #define dictSize(ht) ((ht)->used)
 
 /* API */
-static unsigned int dictGenHashFunction(const unsigned char *buf, int len);
-static dict *dictCreate(dictType *type, void *privDataPtr);
-static int dictExpand(dict *ht, unsigned long size);
-static int dictAdd(dict *ht, void *key, void *val);
-static int dictReplace(dict *ht, void *key, void *val);
-static int dictDelete(dict *ht, const void *key);
-static void dictRelease(dict *ht);
-static dictEntry * dictFind(dict *ht, const void *key);
-static dictIterator *dictGetIterator(dict *ht);
-static dictEntry *dictNext(dictIterator *iter);
-static void dictReleaseIterator(dictIterator *iter);
+extern unsigned int dictGenHashFunction(const unsigned char *buf, int len);
+extern dict *dictCreate(dictType *type, void *privDataPtr);
+extern int dictExpand(dict *ht, unsigned long size);
+extern int dictAdd(dict *ht, void *key, void *val);
+extern int dictReplace(dict *ht, void *key, void *val);
+extern int dictDelete(dict *ht, const void *key);
+extern void dictRelease(dict *ht);
+extern dictEntry * dictFind(dict *ht, const void *key);
+extern dictIterator *dictGetIterator(dict *ht);
+extern dictEntry *dictNext(dictIterator *iter);
+extern void dictReleaseIterator(dictIterator *iter);
 
 #endif /* __DICT_H */

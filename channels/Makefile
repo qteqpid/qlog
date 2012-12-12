@@ -20,8 +20,8 @@ OPTIMIZATION?=-O3
 WARNINGS=-Wall -W -Wstrict-prototypes -Wwrite-strings
 DEBUG?= -g -ggdb
 CFLAGS=-I../src
-REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(ARCH) $(WARNINGS) $(DEBUG)
-REAL_LDFLAGS=$(LDFLAGS) $(ARCH) -ldl
+REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(ARCH) $(WARNINGS) $(DEBUG) $(PROF)
+REAL_LDFLAGS=$(LDFLAGS) $(ARCH) $(PROF) -ldl
 
 
 all: $(DYLIBNAMES) 
@@ -59,4 +59,7 @@ install: $(DYLIBNAMES)
 noopt:
 	$(MAKE) OPTIMIZATION=""
 
-.PHONY: all clean 32bit noopt
+gprof:
+	$(MAKE) PROF="-pg" 
+
+.PHONY: all clean 32bit noopt gprof

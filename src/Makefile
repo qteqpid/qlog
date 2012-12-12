@@ -3,7 +3,7 @@
 # Copyright (C) 2010-2011 Pieter Noordhuis <pcnoordhuis at gmail dot com>
 # This file is released under the BSD license, see the COPYING file
 
-OBJ=net.o hiredis.o sds.o qstring.o dso.o
+OBJ=net.o hiredis.o sds.o qstring.o dso.o dict.o
 BINS=qlog-server
 LIBNAME=libqlog
 
@@ -12,8 +12,8 @@ CC:=$(shell sh -c 'type $(CC) >/dev/null 2>/dev/null && echo $(CC) || echo gcc')
 OPTIMIZATION?=-O3
 WARNINGS=-Wall -W -Wstrict-prototypes -Wwrite-strings
 DEBUG?= -g -ggdb
-REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(WARNINGS) $(DEBUG) $(ARCH)
-REAL_LDFLAGS=$(LDFLAGS) $(ARCH) -ldl
+REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(WARNINGS) $(DEBUG) $(PROF) $(ARCH)
+REAL_LDFLAGS=$(LDFLAGS) $(PROF) $(ARCH) -ldl
 
 STLIBSUFFIX=a
 STLIBNAME=$(LIBNAME).$(STLIBSUFFIX)
@@ -23,11 +23,12 @@ all: $(BINS)
 
 # Deps (use make dep to generate this)
 net.o: net.c fmacros.h net.h hiredis.h
-server.o: server.c hiredis.h qstring.h dso.h
+server.o: server.c hiredis.h qstring.h dso.h dict.h
 hiredis.o: hiredis.c fmacros.h hiredis.h net.h sds.h
 sds.o: sds.c sds.h
 qstring.o: qstring.c
 dso.o: dso.c
+dict.o: dict.c
 
 $(STLIBNAME): $(OBJ)
 	$(STLIB_MAKE_CMD) $(OBJ)
@@ -62,4 +63,7 @@ install: $(DYLIBNAME) $(STLIBNAME)
 noopt:
 	$(MAKE) OPTIMIZATION=""
 
-.PHONY: all clean install 32bit noopt
+gprof:
+	$(MAKE) PROF="-pg" 
+
+.PHONY: all clean install 32bit noopt gprof

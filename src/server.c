@@ -13,7 +13,7 @@
 #include "server.h"
 #include "qstring.h"
 #include "dso.h"
-#include "dict.c"
+#include "dict.h"
 
 
 static struct Qlog qlog;
