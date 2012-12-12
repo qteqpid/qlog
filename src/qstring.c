@@ -18,9 +18,12 @@ char * strcat2(int argc, char *str1, char * str2, ...)
 	char *dest = NULL;
 	va_list va_ptr;
 	char *cur = NULL;
+    int tmp = 0;
 	size_t len = strlen(str1) + strlen(str2);
 
     argc -= 2;
+    tmp = argc;
+
 	va_start(va_ptr, str2);
 	while(argc-- && (cur = va_arg(va_ptr,char *))) {
 		len += strlen(cur);
@@ -31,6 +34,13 @@ char * strcat2(int argc, char *str1, char * str2, ...)
 	dest[0] = '\0';
 	strcat(dest, str1);
 	strcat(dest, str2);
+
+    argc = tmp;
+	va_start(va_ptr, str2);
+	while(argc-- && (cur = va_arg(va_ptr,char *))) {
+	    strcat(dest, cur);
+	}
+	va_end(va_ptr);
 
 	return dest;
 }
