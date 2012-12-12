@@ -18,10 +18,16 @@
 #===============================================================================
 
 set -o nounset                              # Treat unset variables as an error
+pidfile=/etc/qlog/qlog.pid
 
-pid=$(cat /etc/qlog/qlog.pid)
-echo "kill process $pid"
-kill -2 $pid
-rm -f /etc/qlog/qlog.pid &> /dev/null
+function killserver()
+{
+    pid=$(cat $pidfile)
+    echo "kill process $pid"
+    kill -2 $pid
+    rm -f /etc/qlog/qlog.pid &> /dev/null
+
+}
+[[ -e $pidfile ]] && killserver
 
 

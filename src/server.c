@@ -3,6 +3,7 @@
 #include <string.h>
 #include <strings.h>
 #include <signal.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
@@ -115,7 +116,7 @@ void qlogLog(int level, const char *fmt, ...)
 	va_end(ap); 
 
 	if (level == QLOG_LEVEL_ERROR)
-		snprintf(msg, sizeof(msg), "%s [%s:%d]", msg, __FILE__, __LINE__);
+		sprintf(msg, "%s [%s:%d]", msg, __FILE__, __LINE__);
 
 	strftime(buf, sizeof(buf), "%Y%m%d %H:%M:%S", localtime(&now));
 	fprintf(fp, "[%s] [%s] %s\n", buf, LOG_STR[level], msg);
@@ -129,7 +130,7 @@ static void loadQlogConfig(void)
 	char buf[QLOG_MAX_CONFLINE_LEN+1];
 	char *line = NULL;
 	char **argv = NULL;
-	char *err = NULL;
+	const char *err = NULL;
 	int argc = 0, linenum = 0;
 
 	qlogLog(QLOG_LEVEL_INFO, "Use conf_file: %s", qlog.conffile);
@@ -201,7 +202,17 @@ static void daemonize(void)
 void qlogExit(int sig)
 {
 	/* remove pid file */
-	remove(qlog.pidfile);
+    if (sig > 0)
+    	remove(qlog.pidfile);
+
+    /* free qlog allocated memory */
+    free(qlog.pidfile);
+    free(qlog.conffile);
+    free(qlog.channeldir);
+    free(qlog.server);
+    dictRelease(qlog.channels);
+    dictRelease(qlog.category);
+
 	exit(sig);
 }
 
@@ -231,24 +242,27 @@ static void setupSignalHandlers(void)
 	signal(SIGTERM,SIG_IGN);
 }
 
-static void createPidfile(void)
+static int existPidfile(void)
 {
 	/* check if pid file exist */
 	if ((access(qlog.pidfile, 0) != -1)) {/* pidfile exists*/
-		qlogLog(QLOG_LEVEL_WARN, "Pidfile exists. Is another qlog running? exit...");
-		exit(0);
-	} else {
-		FILE *f = fopen(qlog.pidfile, "w");
-		if (f) {
-			fprintf(f, "%d\n", (int)getpid());
-			fflush(f);
-			fclose(f);	
-		} else {
-			qlogLog(QLOG_LEVEL_ERROR, "Can't create pidfile:%s", qlog.pidfile);
-			exit(1);
-		}
+		qlogLog(QLOG_LEVEL_ERROR, "Pidfile exists. Is another qlog running?");
+        return 1;
 	}
+    return 0;
+}
 
+static void createPidfile(void)
+{
+    FILE *f = fopen(qlog.pidfile, "w");
+    if (f) {
+        fprintf(f, "%d\n", (int)getpid());
+    	fflush(f);
+		fclose(f);	
+	} else {
+		qlogLog(QLOG_LEVEL_ERROR, "Can't create pidfile:%s", qlog.pidfile);
+		exit(1);
+	}
 }
 
 static void initQlog(void)
@@ -261,7 +275,7 @@ static void initQlog(void)
 	qlogLog(QLOG_LEVEL_INFO, "Setup handlers for signals");
 	setupSignalHandlers();
 
-	//TODO: load channels
+    /* load channels */
 	dictIterator *it = NULL;
 	dictEntry *de = NULL;
 	Channel * channel = NULL;
@@ -328,20 +342,21 @@ static void runQlog(void)
 	dictEntry *de;
 	Channel *channel;
 
+    qlogLog(QLOG_LEVEL_INFO, "Run Qlog...");
+
+    /* subscribe channels */
 	it = dictGetIterator(qlog.channels);
 	while ((de = dictNext(it)) != NULL) {
+        qlogLog(QLOG_LEVEL_INFO, "Subscribe %s...", dictGetEntryKey(de));
 		qlog.reply = redisCommand(qlog.ctx,"SUBSCRIBE %s", dictGetEntryKey(de));
 		freeReplyObject(qlog.reply);
 	}
 	dictReleaseIterator(it);
-	/*
-	qlog.reply = redisCommand(qlog.ctx,"SUBSCRIBE category");
-	freeReplyObject(qlog.reply);
-	qlog.reply = redisCommand(qlog.ctx,"SUBSCRIBE action");
-	freeReplyObject(qlog.reply);
-	*/
-	while(redisGetReply(qlog.ctx,&qlog.reply) == REDIS_OK) {
+
+    /* wait for channel request */
+	while(redisGetReply(qlog.ctx,(void *)&qlog.reply) == REDIS_OK) {
 		if ((de = dictFind(qlog.channels, qlog.reply->element[1]->str)) != NULL) {
+            qlogLog(QLOG_LEVEL_INFO, "Trigger channel %s...", qlog.reply->element[1]->str);
 			channel = (Channel *)dictGetEntryVal(de);
 			dso_exec(channel, qlog.reply->element[2]->str);	
 		} else {
@@ -349,31 +364,8 @@ static void runQlog(void)
 			qlogLog(QLOG_LEVEL_WARN, "Unknown channel: %s", qlog.reply->element[2]->str);
 		}
 
-		/*
-		if (strcmp(qlog.reply->element[1]->str,"category") == 0) {
-			if (!dictFind(qlog.category, qlog.reply->element[2]->str)) {
-				qlogLog(QLOG_LEVEL_INFO, "Receive category:%s", qlog.reply->element[2]->str);
-				dictAdd(qlog.category, qlog.reply->element[2]->str, NULL); //TODO: time as val
-			} else {
-				qlogLog(QLOG_LEVEL_WARN, "Duplicate category:%s", qlog.reply->element[2]->str);
-				dictReplace(qlog.category, qlog.reply->element[2]->str, NULL); //TODO: time as val
-			}	
-		} else if (strcmp(qlog.reply->element[1]->str,"action") == 0) {
-			if (dictFind(qlog.category, qlog.reply->element[2]->str)) {
-				qlogLog(QLOG_LEVEL_INFO, "Receive action:%s", qlog.reply->element[2]->str);
-			// save data	
-				handleData(qlog.reply->element[2]->str);
-			} else {
-				qlogLog(QLOG_LEVEL_WARN, "Unknown category:%s", qlog.reply->element[2]->str);
-
-			}
-		} else {
-			qlogLog(QLOG_LEVEL_WARN, "Unknown channel: %s", qlog.reply->element[2]->str);
-		}
-		*/
 		freeReplyObject(qlog.reply);
 	}
-
 
 	redisFree(qlog.ctx);
 	qlogExit(0);
@@ -397,8 +389,11 @@ int main(int argc, char **argv)
 	} 
 	
 	loadQlogConfig();
-	createPidfile();
+
+    if (existPidfile()) qlogExit(-1);
     if (qlog.daemonize) daemonize();
+	createPidfile();
+
 	initQlog();
     runQlog();
 	return 0;

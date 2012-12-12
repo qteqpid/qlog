@@ -13,7 +13,7 @@ char * strdup(const char *str)
 	return dup;
 }
 
-char * strcat2(int argc, char *str1, char * str2, ...) 
+char * strcat2(int argc, const char *str1, const char * str2, ...) 
 {
 	char *dest = NULL;
 	va_list va_ptr;
