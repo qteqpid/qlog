@@ -38,16 +38,17 @@ clean:
 
 
 # Installation related variables and target
-INSTALL_LIBRARY_PATH=/etc/qlog/channels
+PREFIX:=/etc/qlog
+CHANNELDIR=$(PREFIX)/channels
 
 ifeq ($(uname_S),SunOS)
   INSTALL?= cp -r
 endif
-INSTALL?= cp -a
+INSTALL?= cp -af
 
 install: $(DYLIBNAMES) 
-	mkdir -p $(INSTALL_LIBRARY_PATH)
-	$(INSTALL) $< $(INSTALL_LIBRARY_PATH)
+	@mkdir -p $(CHANNELDIR)
+	$(INSTALL) $< $(CHANNELDIR)
 
 32bit:
 	@echo ""

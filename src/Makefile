@@ -41,10 +41,17 @@ qlog-%: %.o $(STLIBNAME)
 clean:
 	rm -rf $(STLIBNAME) $(BINS) *.o 
 
+
+# Installations #
+PREFIX:=/etc/qlog
+CONFDIR:=$(PREFIX)/conf
+CHANNELDIR:=$(PREFIX)/channels
+
 install: $(DYLIBNAME) $(STLIBNAME)
-	mkdir -p /etc/qlog/conf
-	mkdir -p /etc/qlog/channels
-	cp -a ../qlog.conf /etc/qlog/conf
+	@if [ ! -d $(CONFDIR) ]; then mkdir -p $(CONFDIR); fi
+	@if [ ! -d $(CHANNELDIR) ]; then mkdir -p $(CHANNELDIR); fi
+	@if [ ! -f $(CONFDIR)/qlog.conf ]; then cp -a ../qlog.conf $(CONFDIR)/qlog.conf; else cp -a ../qlog.conf $(CONFDIR)/qlog.conf.new; fi
+
 
 32bit:
 	@echo ""
