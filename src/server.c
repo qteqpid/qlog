@@ -14,6 +14,7 @@
 #include "qstring.h"
 #include "dso.h"
 #include "dict.h"
+#include "mymalloc.h"
 
 
 static struct Qlog qlog;
@@ -33,9 +34,7 @@ static unsigned int hashFunc(const void *key) {
 static void * keyDup(void *privdata, const void *key)
 {
 	((void)privdata);
-	char *dup = malloc(strlen((char *)key)+1);
-	strcpy(dup, key); 
-	return dup;
+    return strdup(key);
 }
 
 static int keyCompare(void *privdata, const void *key1, const void *key2)
@@ -212,6 +211,9 @@ void qlogExit(int sig)
     free(qlog.server);
     dictRelease(qlog.channels);
     dictRelease(qlog.category);
+
+    /* free mymalloc */
+    myfree(0); // for string
 
 	exit(sig);
 }

@@ -4,11 +4,12 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include "qstring.h"
+#include "mymalloc.h"
 
 char * strdup(const char *str)
 {
 	size_t len = strlen(str)+1;
-	char *dup = malloc(len);
+	char *dup = mymalloc(0, len);
 	memcpy(dup, str, len);
 	return dup;
 }
@@ -30,7 +31,7 @@ char * strcat2(int argc, const char *str1, const char * str2, ...)
 	}
 	va_end(va_ptr);
 
-	dest = malloc(len+1);
+	dest = mymalloc(0, len+1);
 	dest[0] = '\0';
 	strcat(dest, str1);
 	strcat(dest, str2);

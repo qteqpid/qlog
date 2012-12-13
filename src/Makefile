@@ -3,7 +3,7 @@
 # Copyright (C) 2010-2011 Pieter Noordhuis <pcnoordhuis at gmail dot com>
 # This file is released under the BSD license, see the COPYING file
 
-OBJ=net.o hiredis.o sds.o qstring.o dso.o dict.o
+OBJ=net.o hiredis.o sds.o qstring.o dso.o dict.o mymalloc.o
 BINS=qlog-server
 LIBNAME=libqlog
 
@@ -23,12 +23,13 @@ all: $(BINS)
 
 # Deps (use make dep to generate this)
 net.o: net.c fmacros.h net.h hiredis.h
-server.o: server.c hiredis.h qstring.h dso.h dict.h
+server.o: server.c hiredis.h qstring.h dso.h dict.h mymalloc.h
 hiredis.o: hiredis.c fmacros.h hiredis.h net.h sds.h
 sds.o: sds.c sds.h
-qstring.o: qstring.c
+qstring.o: qstring.c mymalloc.h
 dso.o: dso.c
 dict.o: dict.c
+mymalloc.o:mymalloc.c
 
 $(STLIBNAME): $(OBJ)
 	$(STLIB_MAKE_CMD) $(OBJ)
