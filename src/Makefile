@@ -9,9 +9,9 @@ LIBNAME=libqlog
 
 # Fallback to gcc when $CC is not in $PATH.
 CC:=$(shell sh -c 'type $(CC) >/dev/null 2>/dev/null && echo $(CC) || echo gcc')
-OPTIMIZATION?=-O3
+OPTIMIZATION?=-O2
 WARNINGS=-Wall -W -Wstrict-prototypes -Wwrite-strings
-DEBUG?= -g -ggdb
+DEBUG?= -g -ggdb -g3
 REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(WARNINGS) $(DEBUG) $(PROF) $(ARCH)
 REAL_LDFLAGS=$(LDFLAGS) $(PROF) $(ARCH) -ldl
 
