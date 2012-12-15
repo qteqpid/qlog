@@ -11,7 +11,6 @@ LIBNAME=libqlog
 CC:=$(shell sh -c 'type $(CC) >/dev/null 2>/dev/null && echo $(CC) || echo gcc')
 OPTIMIZATION?=-O2
 WARNINGS=-Wall -W -Wstrict-prototypes -Wwrite-strings
-DEBUG?= -g -ggdb -g3
 REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(WARNINGS) $(DEBUG) $(PROF) $(ARCH)
 REAL_LDFLAGS=$(LDFLAGS) $(PROF) $(ARCH) -ldl
 
@@ -61,10 +60,10 @@ install: $(DYLIBNAME) $(STLIBNAME)
 	@echo ""
 	$(MAKE) CFLAGS="-m32" LDFLAGS="-m32"
 
-noopt:
-	$(MAKE) OPTIMIZATION=""
+debug:
+	$(MAKE) OPTIMIZATION="" DEBUG="-g -ggdb -g3"
 
 gprof:
 	$(MAKE) PROF="-pg" 
 
-.PHONY: all clean install 32bit noopt gprof
+.PHONY: all clean install 32bit debug gprof

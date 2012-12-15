@@ -18,7 +18,6 @@ DYLIBNAMES=$(patsubst %.c,%.$(DYLIBSUFFIX),$(SOURCES))
 CC:=$(shell sh -c 'type $(CC) >/dev/null 2>/dev/null && echo $(CC) || echo gcc')
 OPTIMIZATION?=-O2
 WARNINGS=-Wall -W -Wstrict-prototypes -Wwrite-strings
-DEBUG?= -g -ggdb -g3
 CFLAGS=-I../src
 REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(ARCH) $(WARNINGS) $(DEBUG) $(PROF)
 REAL_LDFLAGS=$(LDFLAGS) $(ARCH) $(PROF) -ldl
@@ -56,10 +55,10 @@ install: $(DYLIBNAMES)
 	@echo ""
 	$(MAKE) ARCH="-m32"
 
-noopt:
-	$(MAKE) OPTIMIZATION=""
+debug:
+	$(MAKE) OPTIMIZATION="" DEBUG="-g -ggdb -g3"
 
 gprof:
 	$(MAKE) PROF="-pg" 
 
-.PHONY: all clean 32bit noopt gprof
+.PHONY: all clean 32bit debug gprof
