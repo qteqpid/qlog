@@ -15,6 +15,7 @@
 #include "dso.h"
 #include "dict.h"
 #include "mymalloc.h"
+#include "qsignal.h"
 
 
 static struct Qlog qlog;
@@ -34,7 +35,7 @@ static unsigned int hashFunc(const void *key) {
 static void * keyDup(void *privdata, const void *key)
 {
 	((void)privdata);
-    return strdup(key);
+    return qstrdup(key);
 }
 
 static int keyCompare(void *privdata, const void *key1, const void *key2)
@@ -62,13 +63,13 @@ static struct dictType type= {
 static void initQlogConfig(void)
 {
 	qlog.daemonize = 0;
-	qlog.pidfile = strdup("/etc/qlog/qlog.pid");
-	qlog.conffile = strdup("/etc/qlog/conf/qlog.conf");
-	qlog.channeldir = strdup("/etc/qlog/channels/");
+	qlog.pidfile = qstrdup("/etc/qlog/qlog.pid");
+	qlog.conffile = qstrdup("/etc/qlog/conf/qlog.conf");
+	qlog.channeldir = qstrdup("/etc/qlog/channels/");
 	qlog.logfile = NULL;
 	qlog.loglevel = QLOG_LEVEL_INFO;	
 	qlog.logsink = NULL;
-	qlog.server = strdup("127.0.0.1");
+	qlog.server = qstrdup("127.0.0.1");
 	qlog.port = REDIS_DEFAULT_PORT;
 	qlog.timeout_sec = 1;
 	qlog.timeout_usec = 500000;
@@ -150,11 +151,11 @@ static void loadQlogConfig(void)
 					err = "value must be 'yes' or 'no'"; goto conferr;
 				}
 			} else if (strcasecmp(argv[0], "logsink") == 0) {
-				qlog.logsink = strdup(argv[1]);
+				qlog.logsink = qstrdup(argv[1]);
 				createdir(qlog.logsink);
 				qlog.logfile = strcat2(2, qlog.logsink, "qlog.log");
 			} else if (strcasecmp(argv[0], "channeldir") == 0) {
-				qlog.channeldir = strdup(argv[1]);
+				qlog.channeldir = qstrdup(argv[1]);
 			} else if (strcasecmp(argv[0], "channel") == 0) {
 				dictAdd(qlog.channels, argv[1], NULL);
 			} else if (strcasecmp(argv[0], "check_interval") == 0) {
@@ -228,20 +229,28 @@ static void signalHandler(int sig)
 {
 	qlogLog(QLOG_LEVEL_INFO, "Signal caught: %d", sig);
 	switch(sig) {
-	case SIGINT:
-		qlogExit(sig);
-		break;
 	case SIGHUP:
 		restart();
+        break;
+	case SIGTERM:
+		qlogExit(sig);
+		break;
+    default:
+        // do nothing
+        break;
 	}
 }
 
 static void setupSignalHandlers(void)
 {
 
-	signal(SIGINT,signalHandler);
-	signal(SIGHUP,signalHandler);
-	signal(SIGTERM,SIG_IGN);
+    //TODO: using sigaction
+    initsignal();
+    
+	addsignalhandle(SIGHUP,signalHandler);
+	addsignalhandle(SIGTERM,signalHandler);
+
+    blockothersignals();
 }
 
 static int existPidfile(void)
@@ -256,6 +265,7 @@ static int existPidfile(void)
 
 static void createPidfile(void)
 {
+    //TODO: using open lockfile write instead
     FILE *f = fopen(qlog.pidfile, "w");
     if (f) {
         fprintf(f, "%d\n", (int)getpid());
@@ -316,7 +326,7 @@ void handleData(const char * ac)
 {
 	FILE *fp = NULL;
 	redisReply * reply;
-	char *cname = strdup(ac);
+	char *cname = qstrdup(ac);
 	char *file = strcat2(2, qlog.logsink, cname);
 
 	//TODO: thread

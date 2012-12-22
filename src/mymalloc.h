@@ -6,7 +6,6 @@
 #ifndef MYMALLOC_H
 #define MYMALLOC_H
 
-// system header files.
 
 #define ALLYES_MEM_MAX_SIZE 1024 * 1024
 #define ALLYES_MEM_BLOCK_COUNT 10

@@ -6,7 +6,7 @@
 #include "qstring.h"
 #include "mymalloc.h"
 
-char * strdup(const char *str)
+char * qstrdup(const char *str)
 {
 	size_t len = strlen(str)+1;
 	char *dup = mymalloc(0, len);

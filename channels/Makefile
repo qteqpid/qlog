@@ -30,7 +30,7 @@ $(DYLIBNAMES): $(OBJS)
 
 
 .c.o:
-	$(CC) -std=c99 -pedantic -c $(REAL_CFLAGS) $<
+	$(CC) -std=gnu99 -pedantic -c $(REAL_CFLAGS) $<
 
 clean:
 	rm -rf $(DYLIBNAMES) $(OBJS)

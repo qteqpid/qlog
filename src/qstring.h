@@ -1,7 +1,7 @@
 #ifndef QSTRING_H
 #define QSTRING_H
 
-char * strdup(const char *str);
+char * qstrdup(const char *str);
 
 char * strcat2(int argc, const char *str1, const char * str2, ...);
 
