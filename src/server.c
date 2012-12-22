@@ -243,8 +243,6 @@ static void signalHandler(int sig)
 
 static void setupSignalHandlers(void)
 {
-
-    //TODO: using sigaction
     initsignal();
     
 	addsignalhandle(SIGHUP,signalHandler);
@@ -253,34 +251,39 @@ static void setupSignalHandlers(void)
     blockothersignals();
 }
 
-static int existPidfile(void)
-{
-	/* check if pid file exist */
-	if ((access(qlog.pidfile, 0) != -1)) {/* pidfile exists*/
-		qlogLog(QLOG_LEVEL_ERROR, "Pidfile exists. Is another qlog running?");
-        return 1;
-	}
-    return 0;
-}
+int lockfile(int fd)  
+{  
+    struct flock fl;  
+          
+    fl.l_type = F_WRLCK;  
+    fl.l_start = 0;  
+    fl.l_whence = SEEK_SET;  
+    fl.l_len = 0;  
+    return(fcntl(fd, F_SETLK, &fl));  
+} 
 
-static void createPidfile(void)
+static int already_running(void)
 {
-    //TODO: using open lockfile write instead
-    FILE *f = fopen(qlog.pidfile, "w");
-    if (f) {
-        fprintf(f, "%d\n", (int)getpid());
-    	fflush(f);
-		fclose(f);	
-	} else {
-		qlogLog(QLOG_LEVEL_ERROR, "Can't create pidfile:%s", qlog.pidfile);
+    int pidfd;
+    char buf[16];
+
+    if ((pidfd = open(qlog.pidfile, O_CREAT|O_RDWR, PIDFILE_MODE)) < 0) {
+		qlogLog(QLOG_LEVEL_ERROR, "Can't open pidfile:%s", qlog.pidfile);
 		exit(1);
-	}
+    }
+
+    if (lockfile(pidfd) < 0)
+        return 1;
+
+    ftruncate(pidfd, 0);
+    sprintf(buf, "%d\n", (int)getpid());
+    write(pidfd, buf, strlen(buf)+1);
+
+    return 0;
 }
 
 static void initQlog(void)
 {
-
-
 	qlogLog(QLOG_LEVEL_INFO, "Initializing Qlog(pid=%d)...", (int)getpid());
 
 	/* setupSignalHandler */
@@ -402,9 +405,11 @@ int main(int argc, char **argv)
 	
 	loadQlogConfig();
 
-    if (existPidfile()) qlogExit(-1);
     if (qlog.daemonize) daemonize();
-	createPidfile();
+	if (already_running()) {
+		qlogLog(QLOG_LEVEL_ERROR, "Can't lock pidfile. Is another qlog running?");
+        exit(1); 
+    }
 
 	initQlog();
     runQlog();

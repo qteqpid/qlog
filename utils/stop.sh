@@ -24,7 +24,7 @@ function killserver()
 {
     pid=$(cat $pidfile)
     echo "kill process $pid"
-    kill -2 $pid
+    kill $pid
     rm -f /etc/qlog/qlog.pid &> /dev/null
 
 }
